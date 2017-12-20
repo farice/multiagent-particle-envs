@@ -84,6 +84,7 @@ class MultiAgentEnv(gym.Env):
         self.agents = self.world.policy_agents
         # set action for each agent
         for i, agent in enumerate(self.agents):
+            #print("i: ", i, " agent: ", agent)
             self._set_action(action_n[i], agent, self.action_space[i])
         # advance world state
         self.world.step()
@@ -118,7 +119,7 @@ class MultiAgentEnv(gym.Env):
     def _get_info(self, agent):
         if self.info_callback is None:
             return {}
-        return self.info_callback(agent, self.world)
+        return self.info_callback()
 
     # get observation for a particular agent
     def _get_obs(self, agent):

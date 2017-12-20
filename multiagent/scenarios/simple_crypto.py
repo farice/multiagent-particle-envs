@@ -10,6 +10,10 @@ from multiagent.core import World, Agent, Landmark
 from multiagent.scenario import BaseScenario
 import random
 
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 class CryptoAgent(Agent):
     def __init__(self):
@@ -17,6 +21,9 @@ class CryptoAgent(Agent):
         self.key = None
 
 class Scenario(BaseScenario):
+
+    bob_errors, eve_errors = [], []
+    bob = 0
 
     def make_world(self):
         world = World()
@@ -92,7 +99,17 @@ class Scenario(BaseScenario):
         return [agent for agent in world.agents if agent.adversary]
 
     def reward(self, agent, world):
-        return self.adversary_reward(agent, world) if agent.adversary else self.agent_reward(agent, world)
+        if agent.adversary:
+            rew = self.adversary_reward(agent, world)
+            self.bob += 1
+            if self.bob % 2 == 0:
+                self.bob_errors.append(rew)
+            print("ADVERSARY reward: ", rew)
+        else:
+            rew = self.agent_reward(agent, world)
+            self.eve_errors.append(rew)
+            print("AGENT reward: ", rew)
+        return rew
 
     def agent_reward(self, agent, world):
         # Agents rewarded if Bob can reconstruct message, but adversary (Eve) cannot
@@ -104,12 +121,12 @@ class Scenario(BaseScenario):
             if (a.state.c == np.zeros(world.dim_c)).all():
                 continue
             else:
-                good_rew -= np.sum(np.square(a.state.c - agent.goal_a.color))
+                good_rew -= np.sum(np.square(a.state.c - np.append(agent.goal_a.color, [0])))
         for a in adversaries:
             if (a.state.c == np.zeros(world.dim_c)).all():
                 continue
             else:
-                adv_l1 = np.sum(np.square(a.state.c - agent.goal_a.color))
+                adv_l1 = np.sum(np.square(a.state.c - np.append(agent.goal_a.color, [0])))
                 adv_rew += adv_l1
         return adv_rew + good_rew
 
@@ -117,7 +134,7 @@ class Scenario(BaseScenario):
         # Adversary (Eve) is rewarded if it can reconstruct original goal
         rew = 0
         if not (agent.state.c == np.zeros(world.dim_c)).all():
-            rew -= np.sum(np.square(agent.state.c - agent.goal_a.color))
+            rew -= np.sum(np.square(agent.state.c - np.append(agent.goal_a.color, [0])))
         return rew
 
 
@@ -170,4 +187,14 @@ class Scenario(BaseScenario):
                 print(np.concatenate(comm + [confer]))
             return np.concatenate(comm)
 
-
+    def plot_errors(self):
+        """
+        Plot Lowest Decryption Errors achieved by Recipient and Eavesdropper per epoch
+        """
+        sns.set_style("darkgrid")
+        plt.plot(self.bob_errors)
+        plt.plot(self.eve_errors)
+        plt.legend(['Recipient with key', 'Eavesdropper without key'])
+        plt.xlabel('Epoch')
+        plt.ylabel('Lowest Decryption error achieved')
+        plt.savefig('GAN_anc')
