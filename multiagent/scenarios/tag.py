@@ -2,8 +2,16 @@ import numpy as np
 from multiagent.core import World, Agent, Landmark
 from multiagent.scenario import BaseScenario
 
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 class Scenario(BaseScenario):
+
+    good_errors, adv_errors = [], []
+    adv = 0
+
     def make_world(self):
         world = World()
         # set any world properties first
@@ -83,7 +91,14 @@ class Scenario(BaseScenario):
 
     def reward(self, agent, world):
         # Agents are rewarded based on minimum agent distance to each landmark
-        main_reward = self.adversary_reward(agent, world) if agent.adversary else self.agent_reward(agent, world)
+        if agent.adversary:
+            main_reward = self.adversary_reward(agent, world)
+            self.adv += 1
+            if self.adv % 3 == 0:
+                self.adv_errors.append(main_reward)
+        else:
+            main_reward = self.agent_reward(agent, world)
+            self.good_errors.append(main_reward)
         return main_reward
 
     def agent_reward(self, agent, world):
@@ -145,3 +160,15 @@ class Scenario(BaseScenario):
             if not other.adversary:
                 other_vel.append(other.state.p_vel)
         return np.concatenate([agent.state.p_vel] + [agent.state.p_pos] + entity_pos + other_pos + other_vel)
+
+    def plot_errors(self):
+        """
+        Plot Lowest Decryption Errors achieved by Recipient and Eavesdropper per epoch
+        """
+        sns.set_style("darkgrid")
+        plt.plot(self.good_errors)
+        plt.plot(self.adv_errors)
+        plt.legend(['Good', 'Adversary'])
+        plt.xlabel('Step (1000 per Epoch)')
+        plt.ylabel('Reward')
+        plt.savefig('RL_tag')
