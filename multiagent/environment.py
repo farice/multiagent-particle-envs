@@ -94,7 +94,7 @@ class MultiAgentEnv(gym.Env):
             reward_n.append(self._get_reward(agent))
             done_n.append(self._get_done(agent))
 
-            info_n['n'].append(self._get_info(agent))
+            #info_n['n'].append(self._get_info(agent))
 
         # all agents get total reward in cooperative case
         reward = np.sum(reward_n)
@@ -116,7 +116,7 @@ class MultiAgentEnv(gym.Env):
         return obs_n
 
     # get info used for benchmarking
-    def _get_info(self, agent):
+    def _get_info(self, agent=None):
         if self.info_callback is None:
             return {}
         return self.info_callback()
