@@ -23,6 +23,7 @@ class CryptoAgent(Agent):
 class Scenario(BaseScenario):
 
     bob_errors, eve_errors = [], []
+    bob_mini_errors, eve_mini_errors = [], []
     bob = 0
 
     def make_world(self):
@@ -103,11 +104,11 @@ class Scenario(BaseScenario):
             rew = self.adversary_reward(agent, world)
             self.bob += 1
             if self.bob % 2 == 0:
-                self.bob_errors.append(rew)
+                self.bob_mini_errors.append(rew)
             print("ADVERSARY reward: ", rew)
         else:
             rew = self.agent_reward(agent, world)
-            self.eve_errors.append(rew)
+            self.eve_mini_errors.append(rew)
             print("AGENT reward: ", rew)
         return rew
 
@@ -191,10 +192,14 @@ class Scenario(BaseScenario):
         """
         Plot Lowest Decryption Errors achieved by Recipient and Eavesdropper per epoch
         """
+
+        self.bob_errors.append(np.mean(self.bob_mini_errors))
+        self.eve_errors.append(np.mean(self.eve_mini_errors))
+        self.bob_mini_errors, self.eve_mini_errors = [], []
         sns.set_style("darkgrid")
         plt.plot(self.bob_errors)
         plt.plot(self.eve_errors)
         plt.legend(['Bob', 'Eve'])
-        plt.xlabel('Step (1000 per Epoch)')
+        plt.xlabel('Episode')
         plt.ylabel('Reward')
         plt.savefig('RL_anc')
