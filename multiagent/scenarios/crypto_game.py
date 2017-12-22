@@ -32,6 +32,7 @@ class Scenario(BaseScenario):
         num_agents = 3
         num_adversaries = 1
         num_landmarks = 2
+        # communication action space
         world.dim_c = 4
         # add agents
         world.agents = [CryptoAgent() for i in range(num_agents)]
@@ -47,6 +48,7 @@ class Scenario(BaseScenario):
             landmark.name = 'landmark %d' % i
             landmark.collide = False
             landmark.movable = False
+
         # make initial conditions
         self.reset_world(world)
         return world
@@ -166,24 +168,27 @@ class Scenario(BaseScenario):
         else:
             key = world.agents[2].key
 
-        prnt = False
-        # speaker
+        prnt = True
+        # Adam
         if agent.speaker:
             if prnt:
-                print('speaker')
+                print('Adam (speaker)')
                 print(agent.state.c)
                 print(np.concatenate([goal_color] + [key] + [confer] + [np.random.randn(1)]))
             return np.concatenate([goal_color] + [key])
-        # listener
+
+        # Bob
         if not agent.speaker and not agent.adversary:
             if prnt:
-                print('listener')
+                print('Bob (listener)')
                 print(agent.state.c)
                 print(np.concatenate([key] + comm + [confer]))
             return np.concatenate([key] + comm)
+            
+        # Eve
         if not agent.speaker and agent.adversary:
             if prnt:
-                print('adversary')
+                print('Eve (adversary)')
                 print(agent.state.c)
                 print(np.concatenate(comm + [confer]))
             return np.concatenate(comm)
